@@ -35,7 +35,7 @@ const SmallChatMessage = React.memo(({ message }) => {
         />
       );
     }
-    return formatContent(word);
+    return <>{formatContent(word)} </>; // Añadimos el espacio después del formatContent
   };
 
   // Actualizar estado de múltiples líneas basado en la altura del contenido
@@ -108,7 +108,7 @@ const SmallChatMessage = React.memo(({ message }) => {
           {message.emotes && message.emotes.length > 0
             ? message.content.split(' ').map((word, i) => renderEmoteContent(word, i))
             : message.content.split(' ').map((word, i) => (
-                <React.Fragment key={i}>{formatContent(word)}</React.Fragment>
+                <React.Fragment key={i}>{formatContent(word)} </React.Fragment>
               ))}
         </div>
       </div>

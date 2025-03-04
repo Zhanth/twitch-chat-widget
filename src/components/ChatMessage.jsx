@@ -79,7 +79,7 @@ const ChatMessage = React.memo(({ message }) => {
                 const isSubB = b.name.toLowerCase().includes('subscriber');
                 return isSubA ? 1 : isSubB ? -1 : 0;
               })
-              .map((badge, i) => <Badge key={i} badge={badge} />)}
+              .map((badge, i) => <Badge key={i} badge={badge} size='big' />)}
         </div>
 
         {/* Contenedor del mensaje */}
