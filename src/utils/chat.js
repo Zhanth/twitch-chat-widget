@@ -137,7 +137,7 @@ export class ChatManager {
       //console.log(`[RAW] Mensaje recibido de ${user}: ${message}`);
       
       // Filtra mensajes de bots y Nightbot específicamente
-      if (this.config.botFilter && (msg?.userInfo?.isBot || user.toLowerCase() === 'nightbot')) {
+      if (this.config.botFilter && (msg?.userInfo?.isBot || user.toLowerCase() === 'nightbot'|| user.toLowerCase() === 'streamelements')) {
         //console.log(`[FILTER] Filtrado mensaje de bot/nightbot de ${user}`);
         return;
       }
