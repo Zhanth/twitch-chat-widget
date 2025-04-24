@@ -2,8 +2,14 @@ import { ChatClient } from '@twurple/chat';
 import { ApiClient } from '@twurple/api';
 import { RefreshingAuthProvider } from '@twurple/auth';
 
+let instance = null;
+
 export class ChatManager {
   constructor(config) {
+    if (instance) {
+      return instance;
+    }
+    
     this.config = config;
     // Inicializa cachés para emotes, 7TV e insignias
     this.caches = {
@@ -13,8 +19,14 @@ export class ChatManager {
     };
     this.messageHandlers = new Set(); // Conjunto de manejadores de mensajes
     this.channelUsers = new Set();    // Conjunto de usuarios del canal
+    this.messageHistory = [];         // Historial de mensajes
+    this.maxHistorySize = 100;        // Tamaño máximo del historial
     
     this.initializeAuth(); // Inicializa la autenticación
+    this.loadFromLocalStorage(); // Carga datos del localStorage
+    
+    // Guarda la instancia
+    instance = this;
   }
 
   // Método para inicializar la autenticación
@@ -40,6 +52,45 @@ export class ChatManager {
       authProvider: this.authProvider,
       clientId: this.config.clientId
     });
+  }
+
+  // Carga datos desde localStorage
+  loadFromLocalStorage() {
+    try {
+      // Recupera mensajes del historial
+      const savedMessages = localStorage.getItem('twitch-chat-messages');
+      if (savedMessages) {
+        this.messageHistory = JSON.parse(savedMessages);
+      }
+      
+      // Recupera emotes de 7TV
+      const savedSevenTV = localStorage.getItem('twitch-chat-7tv');
+      if (savedSevenTV) {
+        const parsed = JSON.parse(savedSevenTV);
+        Object.entries(parsed).forEach(([channel, emotes]) => {
+          this.caches.sevenTV.set(channel, emotes);
+        });
+      }
+    } catch (error) {
+      console.error('Error al cargar datos de localStorage:', error);
+    }
+  }
+
+  // Guarda datos en localStorage
+  saveToLocalStorage() {
+    try {
+      // Guarda mensajes del historial
+      localStorage.setItem('twitch-chat-messages', JSON.stringify(this.messageHistory));
+      
+      // Guarda emotes de 7TV
+      const sevenTVData = {};
+      this.caches.sevenTV.forEach((emotes, channel) => {
+        sevenTVData[channel] = emotes;
+      });
+      localStorage.setItem('twitch-chat-7tv', JSON.stringify(sevenTVData));
+    } catch (error) {
+      console.error('Error al guardar datos en localStorage:', error);
+    }
   }
 
   // Obtiene y almacena en caché las insignias de un usuario
@@ -85,6 +136,12 @@ export class ChatManager {
       this.messageHandlers.clear(); // Limpia manejadores
       this.channelUsers.clear(); // Limpia usuarios
       Object.values(this.caches).forEach(cache => cache.clear()); // Limpia todos los cachés
+      
+      // Guarda datos antes de desconectar
+      this.saveToLocalStorage();
+      
+      // Elimina la instancia singleton
+      instance = null;
     }
   }
 
@@ -166,6 +223,15 @@ export class ChatManager {
           channelUsers: Array.from(this.channelUsers)
         };
 
+        // Añade al historial y limita tamaño
+        this.messageHistory.push(messageData);
+        if (this.messageHistory.length > this.maxHistorySize) {
+          this.messageHistory.shift();
+        }
+        
+        // Guarda en localStorage periódicamente
+        this.saveToLocalStorage();
+
         this.messageHandlers.forEach(handler => {
           try {
             handler(messageData);
@@ -187,6 +253,17 @@ export class ChatManager {
 
   // Registra un manejador de mensajes
   onMessage(handler) {
+    // Envía el historial de mensajes al nuevo manejador
+    if (this.messageHistory.length > 0) {
+      this.messageHistory.forEach(msg => {
+        try {
+          handler(msg);
+        } catch (error) {
+          console.error('Error al enviar historial al nuevo manejador:', error);
+        }
+      });
+    }
+    
     this.messageHandlers.add(handler);
     return () => this.messageHandlers.delete(handler); // Devuelve función para remover manejador
   }
@@ -210,7 +287,8 @@ export class ChatManager {
           moderator: 'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3',
           vip: 'https://static-cdn.jtvnw.net/badges/v1/b817aba4-fad8-49e2-b88a-7cc744dfa6ec/3',
           premium: 'https://static-cdn.jtvnw.net/badges/v1/bbbe0db0-a598-423e-86d0-f9fb98ca1933/3',
-          turbo: 'https://static-cdn.jtvnw.net/badges/v1/bd444ec6-8f34-4bf9-91f4-af1e3428d80f/3'
+          turbo: 'https://static-cdn.jtvnw.net/badges/v1/bd444ec6-8f34-4bf9-91f4-af1e3428d80f/3',
+          founder: 'https://static-cdn.jtvnw.net/badges/v1/511b78a9-ab37-472f-9569-457753bbe7d3/3'
         };
 
         const badgeEntries = userInfo.badges instanceof Map ? 
@@ -292,32 +370,26 @@ export class ChatManager {
     }
 
     const sevenTVEmotes = this.caches.sevenTV.get(channelName) || [];
-    const words = message.split(' ');
+    
+    // Dividir el mensaje en palabras usando una expresión regular que considere solo palabras completas
+    const words = message.split(/\s+/);
     
     // Verifica cada palabra contra emotes de 7TV
     for (const word of words) {
-      const emote = sevenTVEmotes.find(e => e.name === word);
-      if (emote) {
-        emotes.set(word, {
-          id: emote.id,
-          url: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-          name: word,
-          platform: '7tv'
-        });
+      // Solo busca emotes de 7TV si la palabra no es ya un emote de Twitch
+      if (!emotes.has(word)) {
+        const emote = sevenTVEmotes.find(e => e.name === word);
+        if (emote) {
+          emotes.set(word, {
+            id: emote.id,
+            url: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
+            name: word,
+            platform: '7tv'
+          });
+        }
       }
     }
 
-    const emoteArray = Array.from(emotes.values());
-    
-    // Verifica si se encontraron todos los emotes
-    const hasAllEmotes = words.every(word => {
-      return !sevenTVEmotes.some(e => e.name === word) || emotes.has(word);
-    });
-
-    if (!hasAllEmotes) {
-      throw new Error('No se obtuvieron todos los emotes correctamente');
-    }
-
-    return emoteArray;
+    return Array.from(emotes.values());
   }
 }

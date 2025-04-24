@@ -39,6 +39,7 @@ export const getBadgeBackgroundColor = (badge) => {
     vip: '#E005B9',
     premium: '#0396D6',
     turbo: '#59399A',
+    founder: 'linear-gradient(180deg, #862CFF, #FF2CBF)'
   };
   const badgeName = badge.name.toLowerCase();
   return badgeColors[badgeName] || '#808080';

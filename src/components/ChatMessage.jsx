@@ -13,6 +13,8 @@ const messageVariants = {
 const ChatMessage = React.memo(({ message }) => {
   const messageRef = React.useRef(null);
   const [isMultiline, setIsMultiline] = useState(false);
+  const [contentLines, setContentLines] = useState([]);
+  const maxLineWidth = 400; // Ancho máximo aproximado para cada línea en píxeles
   
   // Determinar si el mensaje es un solo emote
   const isSingleEmote = useMemo(() => {
@@ -39,16 +41,50 @@ const ChatMessage = React.memo(({ message }) => {
     return formatContent(word);
   };
 
-  // Actualizar estado de múltiples líneas basado en la altura del contenido
+  // Distribuir palabras en líneas de longitud similar
   useEffect(() => {
-    if (messageRef.current) {
-      if (isSingleEmote) {
-        setIsMultiline(false); // Los emotes solitarios no se consideran multilínea
-      } else {
-        setIsMultiline(messageRef.current.clientHeight > 30); // Verificar altura para otros mensajes
-      }
+    if (isSingleEmote) {
+      setContentLines([message.content]); // Para emotes solitarios, mantener una sola línea
+      return;
     }
-  }, [message.content, isSingleEmote]);
+
+    const words = message.content.split(' ');
+    const lines = [];
+    let currentLine = [];
+    let currentLineLength = 0;
+    const avgWordLength = message.content.length / words.length;
+    
+    // Estimación simple: cada palabra tiene un ancho proporcional a su longitud
+    // Ajustar este valor según el tamaño de fuente y estilo
+    const charWidth = 8; // Ancho aproximado de un carácter en píxeles
+    
+    words.forEach(word => {
+      // Estimar el ancho de la palabra (incluyendo espacio)
+      const wordWidth = (word.length + 1) * charWidth;
+      
+      // Si es un emote, usar un ancho fijo aproximado
+      const isEmote = message.emotes?.some(e => word.includes(e.name));
+      const estimatedWidth = isEmote ? 30 : wordWidth;
+      
+      // Si añadir esta palabra excede el ancho máximo, comenzar nueva línea
+      if (currentLineLength + estimatedWidth > maxLineWidth && currentLine.length > 0) {
+        lines.push([...currentLine]);
+        currentLine = [];
+        currentLineLength = 0;
+      }
+      
+      currentLine.push(word);
+      currentLineLength += estimatedWidth;
+    });
+    
+    // Añadir la última línea si contiene palabras
+    if (currentLine.length > 0) {
+      lines.push(currentLine);
+    }
+    
+    setContentLines(lines);
+    setIsMultiline(lines.length > 1);
+  }, [message.content, message.emotes, isSingleEmote]);
 
   return (
     <motion.div
@@ -94,14 +130,25 @@ const ChatMessage = React.memo(({ message }) => {
             w-fit max-w-full
           `}
         >
-          {/* Contenido del mensaje: procesar emotes o texto normal */}
-          <p ref={messageRef} className="text-black flex items-center gap-1 flex-wrap">
-            {message.emotes && message.emotes.length > 0
-              ? message.content.split(' ').map((word, i) => renderEmoteContent(word, i))
-              : message.content.split(' ').map((word, i) => (
-                  <React.Fragment key={i}>{formatContent(word)}</React.Fragment>
-                ))}
-          </p>
+          {/* Contenido del mensaje: procesar líneas justificadas */}
+          <div ref={messageRef} className="text-black">
+            {isSingleEmote ? (
+              <p className="flex items-center gap-1">
+                {renderEmoteContent(message.content, 0)}
+              </p>
+            ) : (
+              contentLines.map((line, lineIndex) => (
+                <p key={lineIndex} className="flex items-center gap-1 mb-1">
+                  {line.map((word, wordIndex) => (
+                    <React.Fragment key={`${lineIndex}-${wordIndex}`}>
+                      {renderEmoteContent(word, wordIndex)}
+                      {wordIndex < line.length - 1 && ' '}
+                    </React.Fragment>
+                  ))}
+                </p>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </motion.div>
