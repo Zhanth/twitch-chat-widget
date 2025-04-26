@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { formatContent, getBackgroundColor, getUsernameColor } from '../utils/chatUtils.jsx';
 import Badge from './Badge.jsx';
+import HXTRank from './HXTRank.jsx';
 
 // Configuración de las animaciones para los mensajes
 const messageVariants = {
@@ -16,6 +17,10 @@ const ChatMessage = React.memo(({ message }) => {
   const [contentLines, setContentLines] = useState([]);
   const maxLineWidth = 400; // Ancho máximo aproximado para cada línea en píxeles
   
+  if (message.isRankMessage && message.rankInfo) {
+    return <HXTRank rankInfo={message.rankInfo} />;
+  }
+
   // Determinar si el mensaje es un solo emote
   const isSingleEmote = useMemo(() => {
     const trimmedContent = message.content.trim();

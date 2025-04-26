@@ -223,6 +223,15 @@ export class ChatManager {
           channelUsers: Array.from(this.channelUsers)
         };
 
+        // Verifica si es un mensaje de rango de hxtgg
+        if (user.toLowerCase() === 'hxtgg') {
+          const rankInfo = this.parseRankMessage(message);
+          if (rankInfo) {
+            messageData.isRankMessage = true;
+            messageData.rankInfo = rankInfo;
+          }
+        }
+
         // Añade al historial y limita tamaño
         this.messageHistory.push(messageData);
         if (this.messageHistory.length > this.maxHistorySize) {
@@ -249,6 +258,29 @@ export class ChatManager {
         });
       }
     });
+  }
+
+  // Analiza mensajes de rango y extrae la información
+  parseRankMessage(message) {
+    // Patrón modificado para ignorar la parte #SNT y enfocarse en el formato del rango
+    const rankPattern = /(.+) está en (.+) (\d+) LP \((\d+) partidas - (\d+)% WR\)/;
+    const match = message.match(rankPattern);
+    
+    if (match) {
+      // Extraemos el nombre de usuario completo (puede incluir #SNT o cualquier otro texto)
+      const fullUsername = match[1].trim();
+      
+      return {
+        username: fullUsername,
+        rank: match[2].trim(),
+        lp: parseInt(match[3], 10),
+        games: parseInt(match[4], 10),
+        winrate: parseInt(match[5], 10),
+        fullRankInfo: `${match[2].trim()} ${match[3]} LP (${match[4]} partidas - ${match[5]}% WR)`
+      };
+    }
+    
+    return null;
   }
 
   // Registra un manejador de mensajes
