@@ -9,20 +9,21 @@ const HXTRank = ({ rankInfo} ) => {
 
     const getRankColor = (rankText) => {
         const rankLower = rankText.toLowerCase();
-        if (rankLower.includes('hierro')) return '#6e6e6e';
-        if (rankLower.includes('bronce')) return '#cd7f32';
-        if (rankLower.includes('plata')) return '#c0c0c0';
-        if (rankLower.includes('oro')) return '#ffd700';
-        if (rankLower.includes('platino')) return '#00ffbf';
-        if (rankLower.includes('diamante')) return '#b9f2ff';
-        if (rankLower.includes('maestro')) return '#9370db';
-        if (rankLower.includes('gran maestro')) return '#ff4500';
-        if (rankLower.includes('retador')) return '#00bfff';
+        if (rankLower.includes('hierro')) return '#524748';
+        if (rankLower.includes('bronce')) return '#8c4f3a';
+        if (rankLower.includes('plata')) return '#7f989d';
+        if (rankLower.includes('oro')) return '#cd8836';
+        if (rankLower.includes('platino')) return '#26abd6';
+        if (rankLower.includes('esmeralda')) return '#0f9c3a';
+        if (rankLower.includes('diamante')) return '#8241eb';
+        if (rankLower.includes('maestro')) return '#9f3fcc';
+        if (rankLower.includes('gran maestro')) return '#cd4545';
+        if (rankLower.includes('retador')) return '#f4c874';
         return '#ffffff'; // Color por defecto
       };
 
     return (
-        <div className=''>
+        <div className={`p-2 flex flex-row items-center gap-2 rounded-lg`} style={{ backgroundColor: getRankColor(rank) }}>
             {rank} 
             <span style={{ color: getRankColor(rank) }}>
                 {username}
