@@ -23,8 +23,10 @@ const HXTRank = ({ rankInfo} ) => {
       };
 
     return (
-        <div className={`p-2 flex flex-row items-center gap-2 rounded-lg`} style={{ backgroundColor: getRankColor(rank) }}>
+        <div className={`p-2 flex flex-row items-center gap-2 rounded-lg border-2 min-h-20 relative mb-4 overflow-hidden`} style={{ backgroundColor: getRankColor(rank), borderColor: getRankColor(rank), }}>
             {rank} 
+            <img src={`/emblem/${rank.split(' ')[0].toLowerCase()}.webp`} alt={rank} className="w-[100px] h-[100px] absolute" />
+
             <span style={{ color: getRankColor(rank) }}>
                 {username}
             </span>

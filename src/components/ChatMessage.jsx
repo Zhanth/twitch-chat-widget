@@ -17,9 +17,9 @@ const ChatMessage = React.memo(({ message }) => {
   const [contentLines, setContentLines] = useState([]);
   const maxLineWidth = 400; // Ancho máximo aproximado para cada línea en píxeles
   
-  if (message.isRankMessage && message.rankInfo) {
-    return <HXTRank rankInfo={message.rankInfo} />;
-  }
+  // if (message.isRankMessage && message.rankInfo) {
+  //   return <HXTRank rankInfo={message.rankInfo} />;
+  // }
 
   // Determinar si el mensaje es un solo emote
   const isSingleEmote = useMemo(() => {
@@ -129,7 +129,7 @@ const ChatMessage = React.memo(({ message }) => {
             bg-[#EFF1F5]
             rounded-r-full
             rounded-tl-md
-            ${isMultiline ? 'rounded-bl-md ' : 'rounded-bl-full'}
+            ${isMultiline ? '!rounded-r-2xl !rounded-tl-none !rounded-bl-2xl' : 'rounded-bl-full'}
             ${isSingleEmote ? 'py-2 px-4 min-w-[48px]' : isMultiline ? 'px-4 py-3' : 'px-4 py-2'}
             inline-block
             w-fit max-w-full
