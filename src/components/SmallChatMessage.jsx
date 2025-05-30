@@ -64,7 +64,7 @@ const SmallChatMessage = React.memo(({ message }) => {
           bg-[#EFF1F5]
           rounded-full
           ${isSingleEmote ? 'py-0 px-0 min-w-[48px]' : 'px-0 py-0'}
-          ${isMultiline ? 'rounded-bl-none rounded-tl-lg bg-red-500' : 'rounded-l-full pr-4'}
+          ${isMultiline ? 'rounded-bl-md rounded-tl-md' : 'rounded-l-full pr-4'}
           overflow-hidden
           w-fit max-w-full
         `}
